@@ -85,3 +85,5 @@ services:
       - CLIENT_ID=log-consumer-instance-1  # Unique client ID for better tracking
       - LOG_LEVEL=info
     restart: always
+    ports:
+      - "9000:9000"

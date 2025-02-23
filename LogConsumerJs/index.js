@@ -1,4 +1,5 @@
 const { Kafka } = require("kafkajs");
+const WebSocket = require("ws");
 const config = require("./config");
 
 // Kafka Configuration
@@ -9,6 +10,14 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: config.CONSUMER_GROUP });
 
+const wss = new WebSocket.Server({port: 9000})
+
+wss.on("connection", (ws)=>{
+  console.log("Websocket client connected!")
+
+  ws.send(JSON.stringify({message:"connected to LogCOnsumer WebSocket!"}))
+})
+
 const run = async () => {
   await consumer.connect();
   await consumer.subscribe({ topic: config.KAFKA_TOPIC, fromBeginning: true });
@@ -17,7 +26,18 @@ const run = async () => {
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      console.log(`Received Log: ${message.value.toString()} (Partition: ${partition})`);
+      const logMessage = message.value.toString()
+
+      console.log(`Received Log: ${logMessage} (Partition: ${partition})`);
+
+      wss.clients.forEach((client)=>{
+        if(client.readyState === WebSocket.OPEN){
+          client.send(JSON.stringify({
+            log: logMessage,
+            partition: partition
+          }))
+        }
+      })
     },
   });
 };
