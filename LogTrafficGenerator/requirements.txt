@@ -1,0 +1,4 @@
+websocket-client
+fastapi
+uvicorn
+pandas

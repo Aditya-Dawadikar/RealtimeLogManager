@@ -1,0 +1,87 @@
+networks:
+  lognetwork:
+    driver: bridge
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    container_name: zookeeper
+    networks:
+     - lognetwork
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    container_name: kafka
+    networks:
+      - lognetwork
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./KafkaServer/create-kafka-topic.sh:/scripts/create-kafka-topic.sh
+    command: >
+      sh -c "
+      /etc/confluent/docker/run &
+      sleep 10;
+      bash /scripts/create-kafka-topic.sh;
+      wait"
+  
+  logmanager:
+    build: ./LogManager
+    container_name: logmanager
+    networks:
+      - lognetwork
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=video-stream-logs
+      - WS_HOST=0.0.0.0
+      - WS_PORT=8080
+      - LOG_LEVEL=INFO
+    ports:
+      - "8080:8080"
+    
+  traffic-generator:
+    build: ./LogTrafficGenerator
+    container_name: logtrafficgenerator
+    networks:
+      - lognetwork
+    depends_on:
+      - logmanager
+    environment:
+      - WS_SERVER_URL=ws://logmanager:8080/ws
+      - NUM_THREADS=3
+      - TRAFFIC_MIN_DELAY=1.0
+      - TRAFFIC_MAX_DELAY=4.0
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+
+  logconsumer:
+    build: ./LogConsumerJs
+    container_name: logconsumer
+    networks:
+      - lognetwork
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=video-stream-logs
+      - CONSUMER_GROUP=log-consumer-group
+      - CLIENT_ID=log-consumer-instance-1  # Unique client ID for better tracking
+      - LOG_LEVEL=info
+    restart: always
