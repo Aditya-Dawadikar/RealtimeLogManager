@@ -31,6 +31,8 @@ The system consists of the following services:
    - Consumes logs from Kafka for debugging.
    - **⚠️ This will be replaced with a real-time log tracking system soon.**
 
+![Highlevel Architecture](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/architecture/highlevel-architecture.png)
+
 ---
 
 ## **📌 Steps to Run the Project**
