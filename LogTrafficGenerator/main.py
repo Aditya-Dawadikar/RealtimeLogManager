@@ -10,6 +10,7 @@ import sys
 import logging
 from config import (WS_SERVER_URL,
                     DEFAULT_NUM_THREADS,
+                    DEFAULT_MAX_THREADS,
                     TRAFFIC_MAX_DELAY,
                     TRAFFIC_MIN_DELAY,
                     LOG_LEVEL)
@@ -22,7 +23,8 @@ app = FastAPI()
 # Control variable for traffic generation
 traffic_running = False
 traffic_threads = []
-num_threads = DEFAULT_NUM_THREADS  # Initial traffic generator threads
+min_threads = DEFAULT_NUM_THREADS  # Initial traffic generator threads
+max_threads = DEFAULT_MAX_THREADS
 
 def load_movies():
     try:
@@ -123,16 +125,16 @@ def send_traffic(thread_id):
 
 # Start Traffic Generation
 @app.get("/start")
-def start_traffic():
+def start_traffic(is_forced=False):
     global traffic_running, traffic_threads
 
-    if traffic_running:
+    if traffic_running and not is_forced:
         return {"message": "Traffic generation already running."}
 
     traffic_running = True
     traffic_threads = []
 
-    for i in range(random.randint(3, 6)):  # Start between 3-6 threads
+    for i in range(random.randint(max(min_threads-3,0), max(min_threads+3,max_threads))):  # Start between 3-6 threads
         t = threading.Thread(target=send_traffic, args=(i,))
         t.start()
         traffic_threads.append(t)
@@ -162,18 +164,20 @@ def stop_traffic():
 # Increase Traffic by n Times
 @app.get("/increase")
 def increase_traffic(n: int = Query(2, description="Multiply traffic by n times")):
-    global num_threads
+    global min_threads, max_threads
 
-    num_threads *= n  # Increase traffic
-    return start_traffic()
+    min_threads += n  # Increase traffic
+    max_threads += n
+    return start_traffic(is_forced=True)
 
 # Decrease Traffic by n Times
 @app.get("/decrease")
 def decrease_traffic(n: int = Query(2, description="Divide traffic by n times")):
-    global num_threads
+    global min_threads, max_threads
 
-    num_threads = max(1, num_threads // n)  # Decrease but ensure at least 1 user remains
-    return start_traffic()
+    min_threads = max(1, min_threads // n)  # Decrease but ensure at least 1 user remains
+    max_threads = DEFAULT_MAX_THREADS
+    return start_traffic(is_forced=True)
 
 def stop_all_threads():
     global traffic_running, traffic_threads

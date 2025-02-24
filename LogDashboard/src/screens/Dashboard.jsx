@@ -78,7 +78,7 @@ const Dashboard = () => {
 
       setTrafficData((prevData)=>[...prevData, trafficPoint])
       logCount = 0;
-    },2000)
+    },500)
 
     return ()=>clearInterval(trafficInterval)
 

@@ -5,6 +5,7 @@ WS_SERVER_URL = os.getenv("WS_SERVER_URL", "ws://logmanager:8080/ws")  # Default
 
 # Number of initial traffic generator threads
 DEFAULT_NUM_THREADS = int(os.getenv("NUM_THREADS", 3))
+DEFAULT_MAX_THREADS = int(os.getenv("MAX_THREADS",10))
 
 # Gradual traffic increase/decrease settings
 TRAFFIC_MIN_DELAY = float(os.getenv("TRAFFIC_MIN_DELAY", 1.0))  # Minimum delay (seconds)
