@@ -57,13 +57,6 @@ const Dashboard = () => {
             return newLogs.slice(-50); // Keep only the last 50 logs for performance
           });
 
-          setTrafficData((prevData) => {
-            const updatedData = [
-              ...prevData,
-              { timestamp: new Date().toLocaleTimeString(), count: prevData.length + 1 },
-            ]
-            return updatedData;
-          });
         }
       };
 
