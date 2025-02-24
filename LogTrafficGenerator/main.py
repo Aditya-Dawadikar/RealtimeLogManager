@@ -93,7 +93,7 @@ def send_traffic(thread_id):
                         "user_id": f"User-{thread_id}",
                         "video_id": video_id,
                         "video_title": video_title,
-                        "event": "event_type",
+                        "event": event_type,
                         "time_seconds": watched_time
                     })
                     ws.send(log_msg)

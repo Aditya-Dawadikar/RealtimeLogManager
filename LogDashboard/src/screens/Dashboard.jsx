@@ -1,28 +1,56 @@
 import React, { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
   const [logs, setLogs] = useState([]);
-  const [trafficData, setTrafficData] = useState([]);
+  const [aggregatedData, setAggregatedData] = useState({});
+
+  const [eventChartData, setEventChartData] = useState([]);
+  const [videoChartData, setVideoChartData] = useState([]);
+
+  const WS_URL = import.meta.env.VITE_WEBSOCKET_URL
 
   useEffect(() => {
-    const socket = new WebSocket("ws://192.168.1.137:9000"); // Connect to LogConsumer WebSocket
 
-    socket.onmessage = (event) => {
-      const logData = JSON.parse(event.data);
-      if (logData.log) {
-        setLogs((prevLogs) => [logData, ...prevLogs.slice(0, 50)]);
+    const connectWebSocket = () => {
+      const socket = new WebSocket(WS_URL);
+  
+      socket.onopen = () => console.log("WebSocket Connected!");
+  
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Received:", data);
 
-        setTrafficData((prevData) => {
-          const newData = [...prevData, { time: new Date().toLocaleTimeString(), count: prevData.length + 1 }];
-          return newData.slice(-20);
-        });
-      }
+        if (data.type === "aggregate_data") {
+          console.log("Updating Aggregated Data:", data.data);
+          setAggregatedData(data.data); // Update aggregatedData state
+      
+          // Convert aggregated data to chart format and update state
+          setEventChartData(
+            Object.entries(data.data.eventCounts || {}).map(([event, count]) => ({
+              event,
+              count,
+            }))
+          );
+      
+          setVideoChartData(
+            Object.entries(data.data.videoCounts || {}).map(([video, count]) => ({
+              video,
+              count,
+            }))
+          );
+        }
+      };
+  
+      socket.onerror = (error) => console.error("WebSocket Error:", error);
+  
+      socket.onclose = () => {
+        console.warn("WebSocket Disconnected! Retrying in 3s...");
+        setTimeout(connectWebSocket, 3000);
+      };
     };
 
-    return () => {
-      socket.close();
-    };
+    connectWebSocket();
   }, []);
 
   return (
@@ -30,28 +58,35 @@ const Dashboard = () => {
       <h1 className="text-2xl font-bold mb-4 text-center">Real-Time Log Traffic Dashboard</h1>
 
       <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Traffic Overview</h2>
+        <h2 className="text-lg font-semibold mb-2">Event Type Distribution (Last 30s)</h2>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={trafficData}>
+          <BarChart data={eventChartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
+            <XAxis dataKey="event" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} />
-          </LineChart>
+            <Bar dataKey="count" fill="#3b82f6" />
+          </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="p-4 bg-white rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Incoming Logs</h2>
-        <div className="max-h-96 overflow-auto border rounded p-2 bg-gray-50">
-          {logs.map((log, index) => (
-            <div key={index} className="border-b p-2 text-sm font-mono bg-gray-200 rounded my-1">
-              <pre className="text-gray-700">{JSON.stringify(log, null, 2)}</pre>
-            </div>
-          ))}
-        </div>
+      <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold mb-2">Most Watched Videos (Last 30s)</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={videoChartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="video" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="count" fill="#22c55e" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="p-4 bg-white rounded-lg shadow-md text-lg text-center">
+        <h2 className="text-lg font-semibold">Active Users (Last 30s): {aggregatedData.unique_users || 0}</h2>
       </div>
     </div>
   );
