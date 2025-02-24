@@ -163,7 +163,7 @@ def stop_traffic():
 
 # Increase Traffic by n Times
 @app.get("/increase")
-def increase_traffic(n: int = Query(2, description="Multiply traffic by n times")):
+def increase_traffic(n: int = Query(2, description="Add n more agents")):
     global min_threads, max_threads
 
     min_threads += n  # Increase traffic

@@ -35,7 +35,7 @@ The system consists of the following services:
 
 ---
 ## **📌 Application Views**
-Click on this [LINK](https://drive.google.com/file/d/1RY3aMbtlRYaCyBuWiZ5-bmM2G-MAUQ8k/view?usp=sharing) for app video preview.
+Click on this [LINK](https://drive.google.com/file/d/15uFxARADXRviko_m4Dk5bLuKRe76Sgp4/view?usp=sharing) for app video preview.
 ![Application Dashboard](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/app/dashboard.png)
 
 ---
