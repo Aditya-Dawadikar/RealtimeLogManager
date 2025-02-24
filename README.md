@@ -133,6 +133,87 @@ module.exports = {
 
 ---
 
+## Running the React Dashboard Locally (LogDashboard Setup)
+
+Since your React app (`LogDashboard`) is running on your local machine, separate from the Dockerized services, follow these specific steps to ensure it works correctly.
+
+---
+
+### 1. Navigate to LogDashboard
+
+First, enter the LogDashboard directory:
+
+```bash
+cd LogDashboard
+```
+
+---
+
+### 2. Install Dependencies
+
+Ensure you have `Node.js` installed, then install the necessary dependencies:
+
+```bash
+npm install
+```
+
+---
+
+### 3. Set Up Environment Variables for Local Development
+
+Create a `.env` file in `LogDashboard` to configure the WebSocket connection dynamically:
+
+```bash
+touch .env
+```
+
+Then add the following content inside `.env`:
+
+```env
+VITE_WEBSOCKET_URL=ws://localhost:9000
+```
+
+Ensure that this matches the WebSocket service running inside your **LogConsumerJs**.
+
+---
+
+### 4. Start the React Development Server
+
+To run the dashboard locally:
+
+```bash
+npm run dev
+```
+
+This will start the Vite development server, and it should show the **local server address** (typically `http://localhost:5173`).
+
+---
+
+### 5. Open in Browser
+
+Once started, access the React dashboard in your browser:
+
+```
+http://localhost:5173
+```
+
+---
+
+### 7. Running the React App in Production (Build Mode)
+
+If you want to build and serve it as a static app:
+
+```bash
+npm run build
+```
+
+Then use a static server:
+
+```bash
+npm
+
+---
+
 ## **📌 Stopping & Cleaning Up**
 ### **1️⃣ Stop All Services**
 ```sh
