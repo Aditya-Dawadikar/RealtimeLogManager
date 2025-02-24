@@ -34,6 +34,12 @@ The system consists of the following services:
 ![Highlevel Architecture](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/architecture/highlevel-architecture.png)
 
 ---
+## **📌 Application Views**
+
+![Application Dashboard](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/app/dashboard.png)
+
+---
+
 
 ## **📌 Steps to Run the Project**
 
