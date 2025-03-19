@@ -38,22 +38,6 @@ services:
       sleep 10;
       bash /scripts/create-kafka-topic.sh;
       wait"
-  
-  logmanager:
-    build: ./LogManager
-    container_name: logmanager
-    networks:
-      - lognetwork
-    depends_on:
-      - kafka
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - KAFKA_TOPIC=video-stream-logs
-      - WS_HOST=0.0.0.0
-      - WS_PORT=8080
-      - LOG_LEVEL=INFO
-    ports:
-      - "8080:8080"
     
   traffic-generator:
     build: ./LogTrafficGenerator
@@ -71,6 +55,22 @@ services:
     ports:
       - "8000:8000"
 
+  logmanager:
+    build: ./LogManager
+    container_name: logmanager
+    networks:
+      - lognetwork
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=video-stream-logs
+      - WS_HOST=0.0.0.0
+      - WS_PORT=8080
+      - LOG_LEVEL=INFO
+    ports:
+      - "8080:8080"
+
   logconsumer:
     build: ./LogConsumerJs
     container_name: logconsumer
@@ -87,3 +87,40 @@ services:
     restart: always
     ports:
       - "9000:9000"
+  
+  logfilter:
+    build: ./LogFilter
+    container_name: logfilter
+    networks:
+      - lognetwork
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=video-stream-logs
+      - CONSUMER_GROUP=log-filter-group
+      - CLIENT_ID=log-filter-instance-1  # Unique client ID for better tracking
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+      - LOG_LEVEL=info
+    restart: always
+    ports:
+      - "9001:9001"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
+    container_name: elasticsearch
+    networks:
+      - lognetwork
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+volumes:
+  esdata:
+    driver: local
