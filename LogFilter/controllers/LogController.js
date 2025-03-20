@@ -6,7 +6,7 @@ const esClient = new Client({ node: config.ELASTICSEARCH_HOST });
 const LogQueryController = async (req, res) => {
     try {
 
-        const { skip = 0, limit = 100, interval = "1h", query } = req.query
+        const { page = 1, limit = 100, interval = "1h", query } = req.query
 
         const now = Date.now()
         let durationMs;
@@ -25,10 +25,14 @@ const LogQueryController = async (req, res) => {
 
         const fromTimestamp = now - durationMs
 
+        const pageNumber = Math.max(parseInt(page), 1)
+        const pageSize = parseInt(limit)
+        const from = (pageNumber - 1) * pageSize
+
         const searchBody = {
             index: "logs",
-            size: parseInt(limit),
-            from: parseInt(skip),
+            size: pageSize,
+            from: from,
             body: {}
         }
 
@@ -51,7 +55,7 @@ const LogQueryController = async (req, res) => {
                         { match: { "video_title": query } },
                         { wildcard: { "video_title.keyword": `*${query}*` } }
                     ],
-                    minimum_should_match: 1
+                    minimum_should_match: query ? 1 : 0
                 }
             }
         }
@@ -65,7 +69,13 @@ const LogQueryController = async (req, res) => {
             });
         }
 
-        res.json(response.hits.hits.map(hit => hit._source));
+        res.json({
+            total_records: response.hits.total.value,
+            total_pages: Math.ceil(response.hits.total.value / pageSize),
+            page_number: pageNumber,
+            page_size: pageSize,
+            records: response.hits.hits.map(hit => hit._source)
+        });
     } catch (error) {
         if (error.meta && error.meta.body && error.meta.body.error) {
             console.error("Elasticsearch Error:", error.meta.body.error);

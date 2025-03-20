@@ -4,7 +4,7 @@ import { IoMdArrowDropup, IoMdArrowDropdown, IoMdArrowDropleft, IoMdArrowDroprig
 
 const QueryTab = ({ logs }) => {
 
-    const timeIntervals = ["1 min", "2 mins", "5 mins", "10 mins", "30 mins", "1 hour", "2 hours", "6 hours", "12 hours", "1 day"]
+    const timeIntervals = ["1m", "2m", "5m", "10m", "30m", "1h", "2h", "6h", "12h", "1d"]
     const pageSize = [10, 20, 50, 100]
 
     const [selectedLog, setSelectedLog] = useState(null)
@@ -15,6 +15,12 @@ const QueryTab = ({ logs }) => {
         "time_interval": timeIntervals[3],
         "page_number": 0,
         "page_size": pageSize[1]
+    })
+    const [queryMeta, setQueryMeta] = useState({
+        "total_records": 0,
+        "page_numer": 0,
+        "page_size": 0,
+        "total_pages": 0
     })
 
     function changePageNumber(direction) {
@@ -29,10 +35,18 @@ const QueryTab = ({ logs }) => {
         if (formData["query"] != "") {
             setIsQueryActive(true)
 
-            await fetch(`http://localhost:9001/api/v1/logs?query=${formData["query"]}&skip=${formData["page_number"]}&limit=${formData["page_size"]}`)
+            await fetch(`http://localhost:9001/api/v1/logs?query=${formData["query"]}&skip=${formData["page_number"]}&limit=${formData["page_size"]}&interval=${formData["time_interval"]}`)
                 .then(res => res.json())
                 .then(data => {
-                    setQueriedLogs(data)
+                    console.log(data)
+                    setQueryMeta({
+                        ...queryMeta,
+                        "total_records": data["total_records"],
+                        "page_number": data["page_number"],
+                        "page_size": data["page_size"],
+                        "total_pages": data["total_pages"]
+                    })
+                    setQueriedLogs(data.records)
                 }).catch(error => {
                     console.log(error)
                 })
@@ -91,7 +105,11 @@ const QueryTab = ({ logs }) => {
                     isQueryActive === true ? <>
                         <div className='mx-2'>
                             <button
-                                className='flex p-2 bg-white rounded-full shadow-md'>
+                                className='flex p-2 bg-white rounded-full shadow-md'
+                                onClick={() => {
+                                    fetchLogs()
+                                }}
+                            >
                                 Refresh
                                 <MdRefresh
                                     className='mx-1 align-middle w-4 h-4 text-blue-500 fill-current' />
@@ -120,7 +138,7 @@ const QueryTab = ({ logs }) => {
                                 onClick={() => { changePageNumber(-1) }}>
                                 <IoMdArrowDropleft />
                             </button>
-                            <p className='px-2'>{`Showing Page ${formData["page_number"]} of n`}</p>
+                            <p className='px-2'>{`Showing Page ${queryMeta["page_number"]} of ${queryMeta["total_pages"]}`}</p>
                             <button
                                 className=''
                                 onClick={() => { changePageNumber(1) }}>
