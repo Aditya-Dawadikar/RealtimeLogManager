@@ -6,7 +6,24 @@ const esClient = new Client({ node: config.ELASTICSEARCH_HOST });
 const LogQueryController = async (req, res) => {
     try {
 
-        const { skip = 0, limit = 100, query } = req.query
+        const { skip = 0, limit = 100, interval = "1h", query } = req.query
+
+        const now = Date.now()
+        let durationMs;
+
+        if (interval.endsWith("m")) {
+            durationMs = parseInt(interval) * 60 * 1000
+        } else if (interval.endsWith("h")) {
+            durationMs = parseInt(interval) * 60 * 60 * 1000
+        } else if (interval.endsWith("d")) {
+            durationMs = parseInt(interval) * 24 * 60 * 60 * 1000
+        } else {
+            return res.status(400).json({
+                error: "Invalid interval format. Use '5m', '1h', '6h', '1d', etc."
+            })
+        }
+
+        const fromTimestamp = now - durationMs
 
         const searchBody = {
             index: "logs",
@@ -18,6 +35,17 @@ const LogQueryController = async (req, res) => {
         if (query) {
             searchBody.body.query = {
                 bool: {
+                    must: [
+                        {
+                            range: {
+                                processed_at: {
+                                    gte: fromTimestamp,
+                                    lte: now,
+                                    format: "epoch_millis"
+                                }
+                            }
+                        }
+                    ],
                     should: [
                         { match: { "user_id": query } },
                         { match: { "video_title": query } },
