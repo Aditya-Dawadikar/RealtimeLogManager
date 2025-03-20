@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
+import QueryTab from '../tabs/QueryTab'
 
 const Dashboard = () => {
+  const [activeTab, setActiveTab] = useState("Query")
   const [logs, setLogs] = useState([]);
   const [aggregatedData, setAggregatedData] = useState({});
   const [trafficData, setTrafficData] = useState([]);
@@ -46,14 +48,8 @@ const Dashboard = () => {
           console.log("Appending log:", data.data);
           logCount++
 
-          const timestamp = new Date().toISOString().replace("T", " ").split(".")[0];
-
           setLogs((prevLogs) => {
-            const newLogs = [...prevLogs, {
-              timestamp,
-              data: data.data,
-              expanded: false,
-            }];
+            const newLogs = [...prevLogs, data.data];
             return newLogs.slice(-50); // Keep only the last 50 logs for performance
           });
 
@@ -70,124 +66,101 @@ const Dashboard = () => {
 
     connectWebSocket();
 
-    const trafficInterval = setInterval(()=>{
+    const trafficInterval = setInterval(() => {
       const trafficPoint = {
         timestamp: new Date().toLocaleTimeString(),
         count: logCount,
       }
 
-      setTrafficData((prevData)=>[...prevData, trafficPoint])
+      setTrafficData((prevData) => [...prevData, trafficPoint])
       logCount = 0;
-    },500)
+    }, 500)
 
-    return ()=>clearInterval(trafficInterval)
+    return () => clearInterval(trafficInterval)
 
   }, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-2xl font-bold mb-4 text-center">Real-Time Log Traffic Dashboard</h1>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Event Type Distribution (Last 30s)</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={eventChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="event" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Most Watched Videos (Last 30s)</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={videoChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="video" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#22c55e" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="flex items-center justify-center bg-white rounded-lg shadow-md p-4 w-48 h-48 mx-auto">
-          <h2 className="text-lg font-semibold text-center">
-            Active Users <br /> (Last 30s): {aggregatedData.unique_users || 0}
-          </h2>
-        </div>
-
-        <div className="col-span-3 bg-white rounded-lg shadow-md p-4">
-          <h2 className="text-lg font-semibold mb-2">Real-Time Traffic</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            {trafficData.length > 0 ? <LineChart data={trafficData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="timestamp" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#ff7300"
-                strokeWidth={3}
-                isAnimationActive={false}
-                dot={false}
-              />
-            </LineChart> : (
-              <p className="text-gray-500 text-center">Waiting for traffic data...</p>
-            )}
-          </ResponsiveContainer>
-        </div>
-
-        <div className="col-span-3 bg-white rounded-lg shadow-md p-4">
-          <h2 className="text-lg font-semibold mb-2">Live Log Stream (last 50 records)</h2>
-          <div className="space-y-2 text-sm h-60 overflow-y-auto">
-            {logs.length === 0 ? (
-              <p className="text-gray-500 text-center">No logs available...</p>
-            ) : (
-              logs.map((log, index) => (
-                <div
-                  key={index}
-                  className="p-2 bg-gray-200 rounded cursor-pointer flex justify-between items-center"
-                  onClick={() =>
-                    setLogs((prevLogs) =>
-                      prevLogs.map((l, i) =>
-                        i === index ? { ...l, expanded: !l.expanded } : l
-                      )
-                    )
-                  }
-                >
-                  <p className="text-gray-700 font-mono text-sm flex-1 text-left">
-                    {log.timestamp}{" "}
-
-                    <span className="text-blue-500 text-lg px-2">
-                      {log.expanded ? "▼" : "▶"} {/* Expand/Collapse Icon */}
-                    </span>
-                  </p>
-                  <div className='text-left flex-1'>
-                    {log.expanded ? (
-                      <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-                        {JSON.stringify(log.data, null, 2)}
-                      </pre>
-                    ) : (
-                      <span className="truncate">{JSON.stringify(log.data)}</span>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
+      
+      <div className='m-5'>
+        <button 
+          className={`mx-2 px-4 py-2 rounded ${activeTab === "Charts" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          onClick={()=>{setActiveTab("Charts")}}>Real-Time Updates</button>
+        <button
+          className={`mx-2 px-4 py-2 rounded ${activeTab === "Query" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          onClick={()=>{setActiveTab("Query")}}>Query Logs</button>
       </div>
-    </div>
+
+      {
+        activeTab === 'Charts' ? (
+          <div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+                <h2 className="text-lg font-semibold mb-2">Event Type Distribution (Last 30s)</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={eventChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="event" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+                <h2 className="text-lg font-semibold mb-2">Most Watched Videos (Last 30s)</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={videoChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="video" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" fill="#22c55e" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="flex items-center justify-center bg-white rounded-lg shadow-md p-4 w-48 h-48 mx-auto">
+                <h2 className="text-lg font-semibold text-center">
+                  Active Users <br /> (Last 30s): {aggregatedData.unique_users || 0}
+                </h2>
+              </div>
+
+              <div className="col-span-3 bg-white rounded-lg shadow-md p-4">
+                <h2 className="text-lg font-semibold mb-2">Real-Time Traffic</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  {trafficData.length > 0 ? <LineChart data={trafficData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="timestamp" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#ff7300"
+                      strokeWidth={3}
+                      isAnimationActive={false}
+                      dot={false}
+                    />
+                  </LineChart> : (
+                    <p className="text-gray-500 text-center">Waiting for traffic data...</p>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <QueryTab logs={logs}/>
+        )
+      }
+    </div >
   );
 };
 
