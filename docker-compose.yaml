@@ -120,6 +120,12 @@ services:
       - "9300:9300"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+      - ./ElasticSearchServer:/ElasticSearchServer
+    command: > 
+      sh -c "
+      /usr/local/bin/docker-entrypoint.sh &
+      sleep 10 && /ElasticSearchServer/setup_elasticsearch.sh;
+      wait"
 
 volumes:
   esdata:

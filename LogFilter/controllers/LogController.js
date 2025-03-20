@@ -113,7 +113,7 @@ const LogTopUsersController = async (req, res) => {
                 aggs: {
                     top_users: {
                         terms: {
-                            field: "user_id.keyword",
+                            field: "user_id",
                             size: parseInt(k)
                         }
                     }
@@ -130,7 +130,7 @@ const LogTopUsersController = async (req, res) => {
         }
 
         const result = response.aggregations.top_users.buckets.map(bucket => ({
-            video_title: bucket.key,
+            user_id: bucket.key,
             count: bucket.doc_count
         }))
 
@@ -161,7 +161,7 @@ const LogEventDistributionController = async (req, res) => {
                 aggs: {
                     event_distribution: {
                         terms: {
-                            field: "event.keyword",
+                            field: "event",
                             size: 10
                         }
                     }
@@ -229,7 +229,8 @@ const LogTimeIntrevalController = async (req, res) => {
                     range: {
                         processed_at: {
                             gte: fromTimestamp,
-                            lte: now
+                            lte: now,
+                            format: "epoch_millis"
                         }
                     }
                 }
