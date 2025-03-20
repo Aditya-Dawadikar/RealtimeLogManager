@@ -29,15 +29,22 @@ The system consists of the following services:
 
 4. **🟢 LogConsumer (Temporary Consumer)**
    - Consumes logs from Kafka for debugging.
-   - **⚠️ This will be replaced with a real-time log tracking system soon.**
+   - Provides WebSocket connection for Client Application, to read Real-Time updates
 
-![Highlevel Architecture](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/architecture/highlevel-architecture.png)
+5. **🟣 LogFilter (Kafka Consumer & Elasticsearch Indexer)**
+   - Consumes logs from Kafka.
+   - Processes logs and indexes them into **Elasticsearch** for efficient searching.
+   - Provides **REST API endpoints** for querying logs by **text, time range, and event types**.
+
+6. **🟡 Elasticsearch (Log Storage & Search Engine)**
+   - Stores and indexes logs for **fast retrieval**.
+   - Allows **full-text search, time-based filtering, and aggregations**.
+
+![Highlevel Architecture](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/architecture/highlevel-architecture-2.png)
 
 ---
 ## **📌 Application Views**
-Click on this [LINK](https://drive.google.com/file/d/15uFxARADXRviko_m4Dk5bLuKRe76Sgp4/view?usp=sharing) for app video preview.
-
-![img](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/app/dashboard1.png)
+![img](https://github.com/Aditya-Dawadikar/RealtimeLogManager/blob/master/views/app/real-time-logs-elastic-search-gif.gif)
 ---
 
 
@@ -70,13 +77,15 @@ docker-compose up -d --build
 - **LogManager**
 - **LogTrafficGenerator**
 - **LogConsumer**
+- **LogFilter**
+- **Elasticsearch**
 
 ### **4️⃣ Verify Running Containers**
 Check that all services are running:
 ```sh
 docker ps
 ```
-You should see `logmanager`, `logtrafficgenerator`, `logconsumer`, `kafka`, and `zookeeper` running.
+You should see `logmanager`, `logtrafficgenerator`, `logconsumer`, `logfilter`, `elasticsearch`, `kafka`, and `zookeeper` running.
 
 ### **5️⃣ Start Log Traffic**
 Trigger log generation using:
@@ -128,6 +137,18 @@ module.exports = {
   CONSUMER_GROUP: process.env.CONSUMER_GROUP || "log-consumer-group",
   CLIENT_ID: process.env.CLIENT_ID || "log-consumer-client",
   LOG_LEVEL: process.env.LOG_LEVEL || "info",
+};
+```
+
+### **🔹 LogFilter (`config.js`)**
+```javascript
+module.exports = {
+  KAFKA_BROKER: process.env.KAFKA_BROKER || "kafka:9092",
+  KAFKA_TOPIC: process.env.KAFKA_TOPIC || "video-stream-logs",
+  CONSUMER_GROUP: process.env.CONSUMER_GROUP || "log-filter-group",
+  CLIENT_ID: process.env.CLIENT_ID || "log-filter-client",
+  ELASTICSEARCH_HOST: process.env.ELASTICSEARCH_HOST || "http://elasticsearch:9200",
+  LOG_LEVEL: process.env.LOG_LEVEL || "info"
 };
 ```
 
@@ -224,14 +245,6 @@ docker-compose down
 docker-compose down -v
 ```
 ✅ This will remove all services **and persistent Kafka logs**.
-
----
-
-## **📌 Future Enhancements**
-- **Replace LogConsumer.js** with a **real-time log tracking & analytics system**.
-- **Integrate visualization** (e.g., Grafana) to monitor logs in real-time.
-- **Add authentication & security** for WebSocket connections.
-- **Optimize Kafka performance for large-scale log streaming.**
 
 ---
 
