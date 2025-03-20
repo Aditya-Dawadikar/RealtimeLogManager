@@ -50,7 +50,8 @@ const Dashboard = () => {
 
           setLogs((prevLogs) => {
             const newLogs = [...prevLogs, data.data];
-            return newLogs.slice(-50); // Keep only the last 50 logs for performance
+            // return newLogs.slice(-50); // Keep only the last 50 logs for performance
+            return newLogs
           });
 
         }

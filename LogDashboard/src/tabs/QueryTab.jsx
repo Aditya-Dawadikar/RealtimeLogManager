@@ -18,24 +18,24 @@ const QueryTab = ({ logs }) => {
     })
     const [queryMeta, setQueryMeta] = useState({
         "total_records": 0,
-        "page_numer": 0,
-        "page_size": 0,
+        "page_number": 1,
+        "page_size": pageSize[1],
         "total_pages": 0
     })
 
     function changePageNumber(direction) {
         if (direction > 0) {
-            setFormData({ ...formData, "page_number": Math.min(formData["page_number"] + 1, 10) })
+            fetchLogs(Math.min(queryMeta["page_number"] + 1, queryMeta["total_pages"]), queryMeta["page_size"])
         } else {
-            setFormData({ ...formData, "page_number": Math.max(formData["page_number"] - 1, 0) })
+            fetchLogs(Math.max(queryMeta["page_number"] - 1, 0), queryMeta["page_size"])
         }
     }
 
-    async function fetchLogs() {
+    async function fetchLogs(page, limit) {
         if (formData["query"] != "") {
             setIsQueryActive(true)
 
-            await fetch(`http://localhost:9001/api/v1/logs?query=${formData["query"]}&skip=${formData["page_number"]}&limit=${formData["page_size"]}&interval=${formData["time_interval"]}`)
+            await fetch(`http://localhost:9001/api/v1/logs?query=${formData["query"]}&page=${page}&limit=${limit}&interval=${formData["time_interval"]}`)
                 .then(res => res.json())
                 .then(data => {
                     console.log(data)
@@ -82,7 +82,7 @@ const QueryTab = ({ logs }) => {
                     <button className='bg-white rounded-r-full px-3'>
                         <MdOutlineSearch
                             className="w-4 h-4"
-                            onClick={() => { fetchLogs() }}
+                            onClick={() => { fetchLogs(1, pageSize[1]) }}
                         />
                     </button>
                 </div>
@@ -107,7 +107,7 @@ const QueryTab = ({ logs }) => {
                             <button
                                 className='flex p-2 bg-white rounded-full shadow-md'
                                 onClick={() => {
-                                    fetchLogs()
+                                    fetchLogs(queryMeta["page_number"], queryMeta["page_size"])
                                 }}
                             >
                                 Refresh
