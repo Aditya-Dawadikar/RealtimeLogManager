@@ -1,0 +1,8 @@
+Fetch List of index
+curl -X GET http://localhost:9200/_cat/indices?v
+
+Search index
+http://localhost:9200/<index_name>/_search?size=10&pretty
+
+Fetch Schema Mapping of existing index
+curl -X GET http://localhost:9200/_mapping?pretty
